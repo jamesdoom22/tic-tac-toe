@@ -7,10 +7,22 @@ const client = axios.create({
 });
 
 export const getHttp = async (url) => {
-    console.log("🚀 ~ file: axios.js:11 ~ getHttp ~ url:", url)
+    console.log("🚀 ~ getHttp ~ url:", url)
     try {
         const response = await client.get(url);
-        console.log("🚀 ~ file: axios.js:16 ~ getHttp ~ response:", response)
+        console.log("🚀 ~ getHttp ~ response:", response)
+        return response;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
+export const postHttp = async (url, data) => {
+    console.log("🚀 ~ postHttp ~ url:", url, data)
+    try {
+        const response = await client.post(url, data);
+        console.log("🚀 ~ postHttp ~ response:", response)
         return response;
     } catch (error) {
         console.error(error);
