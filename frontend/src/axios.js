@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const url = 'http://localhost:3001/api'
-// const url = 'http://192.168.0.119:3001'
+// const url = 'http://localhost:3001/api'
+const url = '/api'
 const client = axios.create({
     baseURL: url
 });

@@ -24,23 +24,7 @@ app.use(function (req, res, next) {
     // Pass to next layer of middleware
     next();
 });
-
-
-// Middleware function to check if request is from whitelisted IP
-const whitelistIPs = ['::1', '::ffff:127.0.0.1', '192.168.0.125']
-const whitelistMiddleware = (req, res, next) => {
-    const clientIP = req.ip;
-    const clientWebsite = req.hostname;
-    console.log(`"🚀 ~ whitelistMiddleware ~ clientIP: ${clientIP} clientWebsite: ${clientWebsite}`)
-
-    if (whitelistIPs.includes(clientIP)) {
-        console.log("Whitelisted");
-        next();
-    } else {
-        console.log("Not Whitelisted");
-        res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
-    }
-};
+app.use(express.static(path.join(__dirname, 'build')));
 app.use('/api', apiRoutes);
 
 app.get('/test', (req, res) => { res.json({ succes: true, message: 'Testing' }) })

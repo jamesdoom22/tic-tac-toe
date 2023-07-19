@@ -31,34 +31,23 @@ export default function Board({ info, switchPage }) {
     }
     const [hasWinner, setHasWinner] = useState(false);
 
-    const stopGame = async (data) => {
-        console.log("stop");
-        // await postHttp(`/session/${localStorage.getItem('session_id')}`, information)
-        // switchPage();
-        // setModal({ ...modal, show: false });
-        // setHistory([...history, information]);
+    const stopGame = async () => {
+        console.log("stop game");
+        await postHttp(`/session/${localStorage.getItem('session_id')}`, information)
+        switchPage();
+        setModal({ ...modal, show: false });
     }
 
     useEffect(() => {
         console.log("here2");
-        // console.log(information, history);
-        // setHistory([...history, information]);
+        console.log(information);
         setTemplate(defaultTile);
-
+        setHasWinner(false);
+        setTurn('o')
     }, [information.records])
 
-    // useEffect(() => {
-    //     rematchGame()
-    //     stopGame()
-    // }, [hasWinner])
-
-
-    const rematchGame = (data) => {
-        console.log("rematch", data);
-        // setModal({ ...modal, show: false });
-        // setHasWinner(false);
-        // setTemplate(defaultTile);
-        // if (information.shuffle) setInformation({ ...information, firstMove: information.firstMove === information.player1.name ? information.player2.name : information.player1.name })
+    const rematchGame = () => {
+        setModal({ ...modal, show: false });
     }
 
     const checkBoard = () => {
@@ -102,18 +91,23 @@ export default function Board({ info, switchPage }) {
 
             setInformation({ ...information, player1: p1, player2: p2, records: [...information.records, roundInfo] });
             console.log("🚀 ~ file: board.js:100 ~ checkBoard ~ { ...information, player1: p1, player2: p2, records: [...information.records, roundInfo] }:", { ...information, player1: p1, player2: p2, records: [...information.records, roundInfo] })
-            setModal({ ...modal, show: true, message, status })
+            showDetails({ ...information, player1: p1, player2: p2, records: [...information.records, roundInfo] }, message, status, roundInfo)
             return
         }
         setTurn(() => turn === 'x' ? 'o' : 'x');
         setInformation(prev => ({ ...prev, play: information.play === 1 ? 2 : 1, turn: information.play === 1 ? information.player2.name : information.player1.name }))
     }
 
+    const showDetails = (data, message, status) => {
+        console.log("🚀 ~ file: board.js:113 ~ showDetails ~ data:", data, message, status)
+
+        setModal({ ...modal, show: true, message, status });
+    }
     useEffect(() => {
         checkBoard()
     }, [template])
 
-    const [modal, setModal] = useState({ show: false, status: '', message: '', proceed: () => rematchGame(), stop: () => stopGame() })
+    const [modal, setModal] = useState({ show: false, status: '', message: '', proceed: () => rematchGame, stop: () => stopGame })
 
     const confettis = () => {
         let display = [];
@@ -139,19 +133,20 @@ export default function Board({ info, switchPage }) {
                         <i className={`icon ${modal.status}`}></i>
                     </div>
                     <div className="modal-footer">
-                        <button className='red' onClick={modal.stop()}>Stop</button>
-                        <button onClick={modal.proceed()}>Continue</button>
+                        <button className='red' onClick={stopGame}>Stop</button>
+                        <button onClick={rematchGame}>Continue</button>
+                        {/* <button onClick={stopGame}>Cancel</button> */}
                     </div>
                 </div>
             </div>
             <div className='board column'>
-                <div className='row end'>
-                    <span>Random first move every round?</span>
+                {/* <div className='row end'>
+                    <span>Switch first move every round?</span>
                     <label className="switch" htmlFor="checkbox">
                         <input type="checkbox" id="checkbox" checked={information.shuffle} onChange={(e) => setInformation(prev => ({ ...prev, shuffle: e.target.checked }))} />
                         <div className="slider round"></div>
                     </label>
-                </div>
+                </div> */}
                 <h2 className='row center'>Round {information.records.length + 1}</h2>
                 <p> Player 1 : <strong>{`${information.player1.name} W(${information.player1.win}) L(${information.player1.lose})`}</strong> </p>
                 <p> Player 2 : <strong>{`${information.player2.name} W(${information.player2.win}) L(${information.player2.lose})`} </strong> </p>

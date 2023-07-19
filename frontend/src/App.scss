@@ -33,7 +33,7 @@ $green: #5cb85c;
   padding: 8px;
   width: 100%;
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
 }
 
 .Game {
@@ -137,10 +137,23 @@ button {
   display: grid;
   align-items: center;
   background-color: unset;
+  gap: 32px;
+
+  button {
+    width: max-content;
+    justify-self: center;
+  }
+
+  .history {
+    height: min-content;
+    overflow: auto;
+    max-height: 500px;
+  }
 }
 
 .player,
-.board {
+.board,
+.history {
   width: 100%;
   max-width: 600px;
   height: 410px;

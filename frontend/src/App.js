@@ -1,7 +1,6 @@
 import './App.scss';
-import { useEffect, useRef, useState } from 'react';
-import ReactHtmlParser from 'react-html-parser';
-import { getHttp } from './axios';
+import { useState } from 'react';
+
 import Main from './pages/main';
 import Board from './pages/board';
 import Player from './pages/player';
@@ -24,14 +23,13 @@ function App() {
   }
 
   const updateInformation = (info) => {
-    console.log("🚀 ~ file: App.js:36 ~ updateInformation ~ info:", info)
     setInformation(info);
   }
 
   return (
     <div className="App background">
       <div className='Nav'>
-        <span>Session ID: <strong>{storedID}</strong></span>
+        {storedID && <span>Session ID: <strong>{storedID}</strong></span>}
       </div>
       <div className='Game'>
         {page === 'main' &&

@@ -3,7 +3,7 @@ import sessionModel from "./models/session.js";
 
 export const getSession = async (req, res) => {
   try {
-    console.log("Session ID: ", req.params.id);
+    console.log("GET Session ID: ", req.params.id);
     if (req.params.id === 'null') {
       let session = new sessionModel();
       session.save();
@@ -13,6 +13,43 @@ export const getSession = async (req, res) => {
       let session = await sessionModel.findOne({ _id: req.params.id });
       res.status(200).json({ message: "Session found.", session });
     }
+  } catch (error) {
+    res.status(404).json({ message: error.message })
+  }
+}
+
+export const postSession = async (req, res) => {
+  try {
+    console.log("POST session ID: ", req.params.id);
+    const { id } = req.params;
+    let data = req.body
+    console.log("🚀 ~ file: apiController.js:26 ~ postSession ~ data:", data)
+    let session = await sessionModel.findOne({ _id: id }).then((session) => {
+      let message = ''
+      if (session) {
+        console.log("🚀 ~ file: apiController.js:28 ~ session ~ updatedDocument:", session)
+        // Handle the success case
+        message = `Session ID: ${id} successfully updated.`
+        session.history = [...session.history, data]
+        console.log("🚀 ~ file: apiController.js:34 ~ session ~ session.history:", session.history)
+        session.save();
+        console.log(message);
+        res.status(200).json({ message, session });
+      } else {
+        // Handle the case when no document is found
+        message = `Session ID: ${id} not found.`
+        console.log(message);
+        res.status(404).json({ message });
+      }
+    })
+      .catch((error) => {
+        console.error('Error updating document:', error);
+        // Handle the error case
+      });
+    // console.log("🚀 ~ file: apiController.js:28 ~ postSession ~ session:", session)
+
+    // res.status(200).json({ message: "Session found.", session });
+
   } catch (error) {
     res.status(404).json({ message: error.message })
   }
