@@ -1,11 +1,14 @@
 import './App.scss';
 import { useEffect, useRef, useState } from 'react';
 import ReactHtmlParser from 'react-html-parser';
+import { getHttp } from './axios';
 
 function App() {
 
   //Main
-  const [page, setPage] = useState('board');
+  const storedID = localStorage.getItem('session_id');
+  const [page, setPage] = useState('main');
+  const [history, setHistory] = useState([])
   const nextPage = () => {
     if (page === 'main') {
       setPage(() => 'player')
@@ -14,10 +17,26 @@ function App() {
     }
   }
 
+  useEffect(() => {
+    sessionData();
+  }, [])
+
+  const sessionData = async () => {
+
+    console.log("🚀 ~ file: App.js:25 ~ data ~ storedValue:", storedID)
+    let request = await getHttp(`/session/${storedID}`)
+    let { session, history } = request.data.session;
+    console.log("🚀 ~ file: App.js:29 ~ sessionData ~ session, history:", session, history)
+    if (!storedID) localStorage.setItem('session_id', session?._id);
+    if (history) setHistory([history])
+
+    console.log("🚀 ~ file: App.js:21 ~ useEffect ~ data:", request)
+  }
+
   //Player's
   const player1 = useRef();
   const player2 = useRef();
-  const [information, setInformation] = useState({ player1: { name: 'james', win: 0, lose: 0 }, player2: { name: 'doom', win: 0, lose: 0 }, shuffle: false, records: [], round: 0, turn: 'james', play: 2 })
+  const [information, setInformation] = useState({ player1: { name: '', win: 0, lose: 0 }, player2: { name: '', win: 0, lose: 0 }, shuffle: false, firstMove: '', records: [], turn: '', play: 1 })
 
   const [disabled, setDisabled] = useState(false)
   const startGame = async (event) => {
@@ -42,9 +61,7 @@ function App() {
     setIsPicking(true);
     await delay(2000);
     const randomIndex = Math.floor(Math.random() * names.length);
-    console.log("🚀 ~ file: App.js:41 ~ shuffleTurn ~ randomIndex:", randomIndex)
-    setInformation(prev => ({ ...prev, turn: names[randomIndex], shuffle: true }))
-
+    setInformation(prev => ({ ...prev, turn: names[randomIndex], firstMove: names[randomIndex], shuffle: true }))
     await delay(2000);
     startCountdown();
     await delay(3000);
@@ -99,32 +116,57 @@ function App() {
   }
 
   const checkBoard = () => {
+    console.log("here board");
     let winner = combinations.some(combination => {
       return combination.every(index => {
         return template[index] === turn;
       })
     })
-    console.log("🚀 ~ file: App.js:107 ~ winner ~ winner:", winner)
 
     let draw = [...template].every(index => index.trim() !== '');
-    if (winner) {
-      console.log("win");
+
+    let turns = template.reduce((count, currentValue) => {
+      if (currentValue !== '') {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+    if (winner || turns === 9) {
       setHasWinner(true)
-      setModal({ ...modal, show: true, message: `<h1>WINNER ${information.turn}!!!</h1>`, status: 'winner' });
-    } else if (draw) {
-      console.log("draw");
-      setModal({ ...modal, show: true, message: `<h1>This round is tie!</h1>`, status: 'draw' });
-    } else {
-      setTurn(() => turn === 'x' ? 'o' : 'x');
-      setInformation(prev => ({ ...prev, play: information.play === 1 ? 2 : 1, turn: information.play === 1 ? information.player2.name : information.player1.name }))
+      let roundInfo = { winner: information.turn, turns: turns };
+      let message, status = '';
+      if (winner) {
+        message = `<h1>WINNER ${information.turn}!!!</h1>`;
+        status = 'winner'
+      }
+      if (draw) {
+        message = `<h1>This round is tie!</h1>`;
+        status = 'draw'
+      }
+
+      let p1 = { ...information.player1 }
+      let p2 = { ...information.player2 }
+      if (information.turn === information.player1.name) {
+        p1 = { ...p1, win: p1.win + 1 }
+        p2 = { ...p2, lose: p2.lose + 1 }
+      } else {
+        p2 = { ...p2, win: p2.win + 1 }
+        p1 = { ...p1, lose: p1.lose + 1 }
+      }
+
+      setInformation({ ...information, player1: p1, player2: p2, records: [...information.records, roundInfo] })
+      setModal({ ...modal, show: true, message, status });
+      return
     }
-    return
+    setTurn(() => turn === 'x' ? 'o' : 'x');
+    setInformation(prev => ({ ...prev, play: information.play === 1 ? 2 : 1, turn: information.play === 1 ? information.player2.name : information.player1.name }))
   }
 
   const [hasWinner, setHasWinner] = useState(false)
 
   useEffect(() => {
     checkBoard()
+    console.log("here");
   }, [template])
 
   const [modal, setModal] = useState({ show: false, status: '', message: '', proceed: () => rematchGame, stop: () => stopGame })
@@ -139,12 +181,39 @@ function App() {
 
   const stopGame = () => {
     console.log("stop");
+    setModal({ ...modal, show: false });
+    setPage('main');
+    setHistory([...history, information]);
   }
+
+  useEffect(() => {
+    console.log("here2");
+    console.log(information, history);
+    setHistory([...history, information]);
+    setTemplate(defaultTile);
+
+  }, [information.records])
+
 
   const rematchGame = () => {
-    console.log("continue");
+    console.log("rematch", information);
+    setModal({ ...modal, show: false });
+    setHasWinner(false);
+    setTemplate(defaultTile);
+    if (information.shuffle) setInformation({ ...information, firstMove: information.firstMove === information.player1.name ? information.player2.name : information.player1.name })
   }
 
+  const shuffleTurn2 = async (names) => {
+
+    // setIsPicking(true);
+    // await delay(2000);
+    // const randomIndex = Math.floor(Math.random() * names.length);
+    // setInformation(prev => ({ ...prev, turn: names[randomIndex], shuffle: true }))
+    // await delay(2000);
+    // startCountdown();
+    // await delay(3000);
+    // nextPage();
+  }
   return (
     <div className="App background">
       <div className={modal.show ? 'modal open' : 'modal'}>
@@ -155,7 +224,7 @@ function App() {
         }
         <div className="modal-content">
           <div className="modal-header">
-            <span className="close">&times;</span>
+            <span onClick={() => setModal({ ...modal, show: false, status: '', message: '' })} className="close">&times;</span>
           </div>
           <div className="modal-body">
             <div>{ReactHtmlParser(modal.message)}</div>
@@ -169,14 +238,26 @@ function App() {
 
       </div>
       <div className='Nav'>
-
+        <span>Session ID: <strong>{storedID}</strong></span>
       </div>
       <div className='Game'>
         {page === 'main' &&
           <div className='main'>
             <button onClick={nextPage}>Start New Game</button>
             <div>
-              No records of history
+              {history.length}
+              {history.map((item, index) => (
+                <div key={index}>
+                  <span>Player 1: {item.player1?.name}</span>
+                  <span>Player 2: {item.player2?.name}</span>
+                  <span>Rounds: {item.records?.length}</span>
+                  {item.records?.map((item2, index2) => (
+                    <p key={index2}>
+                      Winner: {item2.winner} Moves: {item2.turns}
+                    </p>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         }
@@ -219,7 +300,7 @@ function App() {
                   <div className="slider round"></div>
                 </label>
               </div>
-              <h2 className='row center'>Round {information.round + 1}</h2>
+              <h2 className='row center'>Round {information.records.length + 1}</h2>
               <p> Player 1 : <strong>{`${information.player1.name} W(${information.player1.win}) L(${information.player1.lose})`}</strong> </p>
               <p> Player 2 : <strong>{`${information.player2.name} W(${information.player2.win}) L(${information.player2.lose})`} </strong> </p>
               <p className='row center'>{template.every(index => index.trim() === '') ? <>First move</> : hasWinner ? <>The WINNER is</> : <>Turn</>}<strong> {information.turn}</strong></p>

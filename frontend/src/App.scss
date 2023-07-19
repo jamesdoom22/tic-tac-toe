@@ -26,10 +26,14 @@ $green: #5cb85c;
 }
 
 .Nav {
-  height: 100px;
+  height: min-content;
   width: 100%;
   position: absolute;
   top: 0;
+  padding: 8px;
+  width: 100%;
+  display: flex;
+  justify-content: end;
 }
 
 .Game {
@@ -442,6 +446,7 @@ button {
     height: 256px;
     background-image: url("./images/win256.png");
   }
+
   &.draw {
     width: 256px;
     height: 256px;
